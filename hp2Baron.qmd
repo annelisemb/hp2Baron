@@ -1,24 +1,37 @@
 ---
 title: "hp2Baron"
 author: "Annelise Baron"
-format: html
+date: 2023-04-18
+date-format: "YYYY-MM-DD"
+format:
+  html:
+    toc: true
+    toc-location: left
 editor_options: 
   chunk_output_type: inline
 ---
 
-## INTRO
-The dog_descriptions data frame explores some facts about many, many dogs available for adoption. The data frame has many varaible, and I'll be focusing on 7 of them.
-## DATA DICTIONARY
+## intro
+The dog_descriptions data frame explores some facts about many, many dogs available for adoption. The data frame has many variables, and I'll be focusing on 7 of them.
+
+## data dictionary
+
 id - unique identifier of each dog
+
 breed_primary - primary breed of each dog
+
 age - age of each dog, either baby, young, adult, or senior
+
 sex - sex of each dog, either male or female
+
 size - size of each dog, either small, medium, or large
+
 name - name of each dog
+
 description - description of each dog
 
 :::callout-note
-As you will see, lots of the code below does not work. I really struggled with this project. Most of the code I tried to do did not work, and I could not figure out how to get it to. I admittedly started this assignment later than I should have, though I still dedicated many hours to it. By the time I realized I was in trouble, it was too late to reach out for help. Totally on me! I just wanted to write this disclaimer, explaining why this report is the way it is. Once I started to realize I wouldn't have time to fix all my code, I started to leave the code behind instead of deleting it, and I have explained below what I was trying to do. So sorry!
+As you will see, lots of the code below does not work. I really struggled with this project. Most of the code I tried to do did not work, and I could not figure out how to get it to. I admittedly started this assignment later than I should have, though I still dedicated many hours to it. By the time I realized I was in trouble, it was too late to reach out for help. Totally on me! I just wanted to write this disclaimer, explaining why this report is the way it is. Once I started to realize I wouldn't have time to fix all my code, I started to leave the code behind instead of deleting it, and I have explained below what I was trying to do. There's a lot that I deleted along the way, so I did attempt more than what's below. So sorry!
 :::
 
 ## setup
@@ -51,8 +64,8 @@ I noticed that at least one dog name had special characters, so I also got rid o
 dogs$name <- gsub("[^[:alnum:]]", "", dogs$name)
 ```
 
-### question 1
-## sentiment analysis of dog descriptions
+## question 1
+### sentiment analysis of dog descriptions
 here is what I did get to work! I unnested the dog descriptions into each word, removed stop words, and joined the bing sentiments.
 
 ```{r}
@@ -88,7 +101,7 @@ dog_sentiment <- dog_descrip_freq %>%
 
 dog_sentiment
 
-#making this dataframe for later!
+# making this dataframe for later!
 dog_sentiment2 <- dog_descrip %>%
   inner_join(get_sentiments("bing"))
 ```
@@ -113,8 +126,8 @@ dog_sentiment %>%
   facet_wrap(~ sentiment, scales = "free")
 ```
 
-### question 2
-## bigram analysis of dog descriptions
+## question 2
+### bigram analysis of dog descriptions
 I had some luck with this code, but not quite enough.
 
 here, I added the bigrams column to the data frame
@@ -141,8 +154,8 @@ dog_bigrams %>%
   geom_col()
 ```
 
-### mini question
-## What are the most popular names? How do names interact with age and sex?
+## mini question
+### What are the most popular names? How do names interact with age and sex?
 
 here, I just wanted to see the most popular names. not surprised by bella or buddy!
 ```{r}
@@ -152,8 +165,8 @@ dogs %>%
   arrange(desc(n))
 ```
 
-### question 3
-## relationship between name, age, and sex
+## question 3
+### relationship between name, age, and sex
 
 I thought it'd be interesting to look at the relationship between name, age, and sex, and see if there were any patterns. specifically, I wanted to look at name v age and name v sex.
 
@@ -184,14 +197,14 @@ dogs %>%
   filter(name == "bella")
 ```
 
-### question 4
-## analyzing patterns between name, breed, and size
+## question 4
+### analyzing patterns between name, breed, and size
 I wanted to do a similar analysis as question 3 for name v breed and name v size, but since I could figure out 3, I never got to 4.
 
-### other questions
+## more questions
 there were lots of things I was thinking of exploring, but didn't get to given my lack of success for the other questions.
 
-## relationship between sentiment and age
+### relationship between sentiment and age
 
 this simple table tells us that most of the sentiment for baby dogs is positive - however, that's still lots that are negative.
 ```{r}
@@ -213,7 +226,7 @@ dog_sentiment2 %>%
   facet_wrap(~ sentiment, scales = "free")
 ```
 
-## looking at relationship between name and description sentiment
+### looking at relationship between name and description sentiment
 this table worked, but I'm not sure it tells us much useful information.
 ```{r}
 dog_sentiment2 %>%
@@ -222,10 +235,15 @@ dog_sentiment2 %>%
   arrange(desc(n))
 ```
 
-## other questions I would have loved to answer...
+### other questions I would have loved to answer...
+I would have used dog_sentiment2 for these, which is why I created it above.
+
 1. for the dogs of each age, what is the most common words and sentiment in their descriptions?
+
 2. for the dogs of each sex, what is the most common words and sentiment in their descriptions?
+
 3. for the dogs of each size, what is the most common words and sentiment in their descriptions?
+
 4. for the dogs of each breed, what is the most common words and sentiment in their descriptions?
 
 
