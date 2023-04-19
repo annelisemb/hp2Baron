@@ -1,0 +1,1 @@
+"0","dogs$name <- gsub(""[^[:alnum:]]"", """", dogs$name)"

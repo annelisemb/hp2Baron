@@ -1,0 +1,246 @@
+---
+title: "Baron_hp1"
+author: "Annelise Baron"
+format:
+  html:
+    embed-resources: true
+---
+
+```{r}
+library(tidyverse)
+library(stringr)
+```
+
+## import
+
+```{r}
+tuesdata <- tidytuesdayR::tt_load('2020-01-14') 
+tuesdata <- tidytuesdayR::tt_load(2020, week = 3)
+passwords <- tuesdata$passwords
+```
+
+## rename
+
+I wanted to rename some of the variables so that the column names made a bit more sense.
+```{r}
+passwords <- passwords %>%
+  rename(
+    popularity = 'rank',
+    guess_time = 'value',
+    guess_unit = 'time_unit',
+    hack_sec = 'offline_crack_sec'
+  )
+```
+
+## clean up
+
+I removed the last rows, because they are all NAs and therefore unnecessary.
+```{r}
+passwords <- passwords[-(501:507),]
+```
+
+I removed rank_alt because it is a duplicate of popularity, as well as font_size because it is not of concern or value.
+```{r}
+passwords <- passwords[-c(7,9)]
+```
+
+## finding patterns
+
+Name is most popular, cool-macho is second, and simple-alphanumeric is third among all AND only the strongest passwords.
+```{r}
+passwords %>%
+  group_by(category) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+```
+
+```{r}
+passwords %>%
+  filter(strength >= 9) %>%
+  group_by(category) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+```
+
+## converting all guess times to days
+
+I thought it would be beneficial to have all the guess times converted to a single unit, as that makes it much easier to compare.
+```{r}
+passwords <- passwords %>%
+  mutate(
+    guess_days = case_when(
+      guess_unit == "years" ~ guess_time * 365,
+      guess_unit == "minutes" ~ guess_time / 1440,
+      guess_unit == "seconds" ~ guess_time / 86400,
+      guess_unit == "weeks" ~ guess_time * 7,
+      guess_unit == "months" ~ guess_time * 30,
+      guess_unit == "hours" ~ guess_time / 24,
+      guess_unit == "days" ~ guess_time
+    )
+    )
+```
+
+## pivot
+
+I pivoted longer so that each password had two rows, one for the original guess time and one for the guess time in days. Then I cleaned it up so that it read correctly. I didn't see much benefit to pivoting the data longer or wider, but I found this to be the most logical thing to do. I think that the original passwords data frame is best though.
+```{r}
+passwords_longer <- passwords %>%
+  pivot_longer(
+    cols = c(guess_time, guess_days),
+    names_to = "unit",
+    values_to = "time"
+    ) %>%
+  mutate(
+      unit = case_when(
+        unit == "guess_time" & guess_unit == "years" ~ "years",
+        unit == "guess_time" & guess_unit == "minutes" ~ "minutes",
+        unit == "guess_time" & guess_unit == "days" ~ "days",
+        unit == "guess_time" & guess_unit == "seconds" ~ "seconds",
+        unit == "guess_time" & guess_unit == "weeks" ~ "weeks",
+        unit == "guess_time" & guess_unit == "months" ~ "months",
+        unit == "guess_time" & guess_unit == "hours" ~ "hours",
+        unit == "guess_time" & guess_unit == "days" ~ "days",
+        unit == "guess_days" ~ "days"
+    )
+    )
+
+passwords_longer <- passwords_longer[,-4]
+```
+
+## joins
+
+I made a new column about my opinion on each password category - I then made a new data frame with just that column so I could join them (back)... I didn't know what else I could join! hope this is ok
+```{r}
+passwords_cat_op <- passwords %>%
+  mutate(
+    category_op = case_when(
+      category == "name" ~ "boring",
+      category == "cool-macho" ~ "eh",
+      category == "simple-alphanumeric" ~ "adequate",
+      category == "fluffy" ~ "not great",
+      category == "sport" ~ "ok",
+      category == "nerdy-pop" ~ "fun",
+      category == "animal" ~ "cute",
+      category == "password-related" ~ "bad",
+      category == "food" ~ "love",
+      category == "rebellious-rude" ~ "funny"
+    )
+  )
+```
+
+```{r}
+passwords_cat_op <- passwords_cat_op[-c(1:2,4:8)]
+```
+
+```{r}
+passwords %>%
+  semi_join(passwords_cat_op)
+```
+
+```{r}
+passwords %>%
+  left_join(passwords_cat_op) %>%
+  distinct(.keep_all = TRUE)
+```
+
+## strings
+
+I was curious if there were lots of passwords containing "123," as I noticed a lot of them at the top of the data set. Looks like there's not a lot that are TRUE - indeed just a disproportionate amount at the top of the data set.
+```{r}
+passwords %>%
+  count(condition = str_detect(password, "123"))
+```
+
+I wanted to see if there were lots of passwords with the word "ball," because I thought a lot of the sports passwords might contain it. There were only 3, and surprisingly one is of the category name, not sports!
+```{r}
+str_subset(passwords$password, "ball")
+
+passwords %>%
+  filter(password == "snowball")
+```
+
+I thought it'd be fun to add this.
+```{r}
+passwords %>%
+  mutate(statement = str_glue("The password is {password}"))
+```
+
+I thought it would be helpful to add a length column.
+```{r}
+passwords <- passwords %>%
+  mutate(length =
+    (str_length(password))
+  )
+```
+
+## plots!
+
+:::callout-note
+I originally wanted to use hack_sec and guess_days (which I created with plots in mind) for some of my plots. However, as we discovered when I asked you about it in class, using these variables produced very jumbled, mushed together plots that don't convey much meaning. Since hack_sec is so small, and guess_days so large, I found that they were best to leave out of the plots.
+:::
+
+:::callout-note
+For my first, second, and fifth plot, I assigned color to category even though it's on the x-axis. I found it's much easier to visualize and interpret with color added as well.
+:::
+
+This plot shows the relationship between strength and category, excluding outliers. Simple-alphamumeric seems to be the weakest, and the others seem pretty equivalent.
+```{r}
+passwords %>%
+  ggplot(
+  aes(x = category, y = strength, color = category)
+) +
+  geom_jitter() +
+  coord_cartesian(ylim = c(0, 10)) +
+  labs(
+    title = "Strength by Category",
+    subtitle = "excluding outliers"
+    ) 
+```
+
+This violin plot also shows us the relationship between strength and category, but with the outliers. I think it's really helpful to see the data this way. The outliers are very clear, and  it's easier to compare the categories' strengths with more detail because of the shape of the plots.
+```{r}
+passwords %>%
+  ggplot(
+    aes(x = category, y = strength, fill = category)
+  ) + geom_violin(draw_quantiles = .5,
+              trim = FALSE, 
+              alpha = 0.5) +
+  labs(
+    title = "Strength by Category",
+    subtitle = "including outliers"
+  )
+```
+
+This compares length with category. Name has the biggest peak, which makes sense because it is the biggest category. Most categories seem to peak at length 6, which I find interesting because I feel like lots of passwords require 8 or more characters.
+```{r}
+passwords %>%
+ggplot(
+  aes(x = length, color = category)) +
+  geom_freqpoly(binwidth = 1) +
+  labs(
+    title = "Length by Category"
+  )
+```
+
+This simply shows us how many passwords are of each strength. Most have a strength of 8, and many others fall below that. There are also a few outliers.
+```{r}
+passwords %>%
+ggplot(aes(strength)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "green") +
+  labs(
+    title = "Password Strength"
+  )
+```
+
+I was curious if any categories were substantially more or less popular than others - looks like they are all pretty equivalent!
+```{r}
+passwords %>%
+  ggplot(
+    aes(x = category, y = popularity, fill = category)
+  ) + geom_violin(draw_quantiles = .5,
+              trim = FALSE, 
+              alpha = 0.5) +
+  labs(
+    title = "Popularity by Category"
+  )
+```

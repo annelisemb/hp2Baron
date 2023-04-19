@@ -1,0 +1,8 @@
+"0","dog_descrip_idf %>%"
+"0","  group_by(id) %>% "
+"0","  arrange(desc(tf_idf)) %>%"
+"0","  ggplot(aes(x = tf_idf, y = reorder(word, tf_idf), fill = id)) +"
+"0","  geom_col(show.legend = FALSE) +"
+"0","  labs(x = NULL, y = ""tf-idf"") +"
+"0","  facet_wrap(~id, scales = ""free"") +"
+"0","  theme_minimal()"

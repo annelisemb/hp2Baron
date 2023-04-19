@@ -1,0 +1,231 @@
+---
+title: "hp2Baron"
+author: "Annelise Baron"
+format: html
+editor_options: 
+  chunk_output_type: inline
+---
+
+## INTRO
+The dog_descriptions data frame explores some facts about many, many dogs available for adoption. The data frame has many varaible, and I'll be focusing on 7 of them.
+## DATA DICTIONARY
+id - unique identifier of each dog
+breed_primary - primary breed of each dog
+age - age of each dog, either baby, young, adult, or senior
+sex - sex of each dog, either male or female
+size - size of each dog, either small, medium, or large
+name - name of each dog
+description - description of each dog
+
+:::callout-note
+As you will see, lots of the code below does not work. I really struggled with this project. Most of the code I tried to do did not work, and I could not figure out how to get it to. I admittedly started this assignment later than I should have, though I still dedicated many hours to it. By the time I realized I was in trouble, it was too late to reach out for help. Totally on me! I just wanted to write this disclaimer, explaining why this report is the way it is. Once I started to realize I wouldn't have time to fix all my code, I started to leave the code behind instead of deleting it, and I have explained below what I was trying to do. So sorry!
+:::
+
+## setup
+```{r}
+library(tidyverse)
+library(tidytext)
+library(geniusr)
+```
+
+## importing the data
+```{r}
+dog_descriptions <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_descriptions.csv')
+```
+
+## isolating desired columns
+since the above seven variables are the only ones I'll be looking at, I wanted to make a dataset with only those variables.
+```{r}
+dogs <- dog_descriptions %>%
+  select(id, breed_primary, age, sex, size, name, description)
+```
+
+## refining data
+some of the dog names were in all caps, some not, so I changed them all to lowercase.
+```{r}
+dogs <- mutate(dogs, name = tolower(name))
+```
+
+I noticed that at least one dog name had special characters, so I also got rid of those.
+```{r}
+dogs$name <- gsub("[^[:alnum:]]", "", dogs$name)
+```
+
+### question 1
+## sentiment analysis of dog descriptions
+here is what I did get to work! I unnested the dog descriptions into each word, removed stop words, and joined the bing sentiments.
+
+```{r}
+dog_descrip <- dogs %>%
+  unnest_tokens(word, description)
+```
+
+```{r}
+dog_descrip <- dog_descrip %>% 
+  anti_join(stop_words)
+```
+
+here, we have a simple table of the most common words within the descriptions
+```{r}
+dog_descrip_freq <- dog_descrip %>%
+  count(word, sort = TRUE)
+
+dog_descrip_freq
+```
+
+here, we have the top 20 words plotted in order or frequency
+```{r}
+dog_descrip_freq %>%
+  slice_max(n, n = 20) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word)) +
+  geom_col()
+```
+
+```{r}
+dog_sentiment <- dog_descrip_freq %>%
+  inner_join(get_sentiments("bing"))
+
+dog_sentiment
+
+#making this dataframe for later!
+dog_sentiment2 <- dog_descrip %>%
+  inner_join(get_sentiments("bing"))
+```
+
+this is a simple table of the most frequent words with eithe positive or negative sentiment
+```{r}
+dog_sentiment %>%
+  group_by(n) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+  
+dog_sentiment
+```
+
+this plots the most frequent words from the descriptions, specifically the 20 most frequent of the negative sentiment, and 20 most frequent of the positive sentiment
+```{r}
+dog_sentiment %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 20) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ sentiment, scales = "free")
+```
+
+### question 2
+## bigram analysis of dog descriptions
+I had some luck with this code, but not quite enough.
+
+here, I added the bigrams column to the data frame
+```{r}
+dog_bigrams <- dogs %>% 
+  unnest_tokens(bigram, description, token = "ngrams", n = 2)
+
+dog_bigrams
+```
+
+I can't remove the stopwords, which I believe is because I have no column for each singular word. I couldn't figure out how to add a word column
+```{r, eval = FALSE}
+dog_bigrams %>%
+  anti_join(get_stopwords(language = "en")) %>%
+  count(word, sort = TRUE)
+```
+
+since there are stop words, this plot isn't the most meaningful. however, it does show the most common bigrams, and clearly, many of the descriptions talk about how to get the dog --- with the application and adoption fee.
+```{r}
+dog_bigrams %>%
+  count(bigram, sort = TRUE) %>%
+  slice_max(n, n = 20) %>%
+  ggplot(aes(n, bigram)) +
+  geom_col()
+```
+
+### mini question
+## What are the most popular names? How do names interact with age and sex?
+
+here, I just wanted to see the most popular names. not surprised by bella or buddy!
+```{r}
+dogs %>%
+  group_by(name, age) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+```
+
+### question 3
+## relationship between name, age, and sex
+
+I thought it'd be interesting to look at the relationship between name, age, and sex, and see if there were any patterns. specifically, I wanted to look at name v age and name v sex.
+
+the goal with this plot was to see the 20 most popular names for each age. however, I couldn't get it to limit to the top 20. when removing the code line 'slice(1:20)' the code runs, but the plot is incredibly unhelpful.
+```{r, eval = FALSE}
+dogs %>%
+  group_by(name, age) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n)) %>%
+  slice(1:20) %>%
+  ggplot(
+    aes(x = name, y = age, fill = age)
+  ) + geom_jitter()
+```
+
+this code runs, and tells us that for the most popular name, bella, most dogs are adult, and all but 1 are female.
+```{r}
+dogs %>%
+  group_by(name, age) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n)) %>%
+  filter(name == "bella")
+
+dogs %>%
+  group_by(name, sex) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n)) %>%
+  filter(name == "bella")
+```
+
+### question 4
+## analyzing patterns between name, breed, and size
+I wanted to do a similar analysis as question 3 for name v breed and name v size, but since I could figure out 3, I never got to 4.
+
+### other questions
+there were lots of things I was thinking of exploring, but didn't get to given my lack of success for the other questions.
+
+## relationship between sentiment and age
+
+this simple table tells us that most of the sentiment for baby dogs is positive - however, that's still lots that are negative.
+```{r}
+dog_sentiment2 %>%
+  filter(age == "Baby") %>%
+  group_by(sentiment) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+```
+
+I tried to plot, this, bit it did not work.
+```{r, eval = FALSE}
+dog_sentiment2 %>%
+  filter(age == "Baby") %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 20) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ sentiment, scales = "free")
+```
+
+## looking at relationship between name and description sentiment
+this table worked, but I'm not sure it tells us much useful information.
+```{r}
+dog_sentiment2 %>%
+  group_by(name, sentiment) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+```
+
+## other questions I would have loved to answer...
+1. for the dogs of each age, what is the most common words and sentiment in their descriptions?
+2. for the dogs of each sex, what is the most common words and sentiment in their descriptions?
+3. for the dogs of each size, what is the most common words and sentiment in their descriptions?
+4. for the dogs of each breed, what is the most common words and sentiment in their descriptions?
+
+

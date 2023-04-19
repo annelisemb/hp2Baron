@@ -1,0 +1,2 @@
+"0","dogs <- dog_descriptions %>%"
+"0","  select(id, breed_primary, age, sex, size, name, description)"

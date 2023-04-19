@@ -1,0 +1,2 @@
+"0","dog_descrip <- dogs %>%"
+"0","  unnest_tokens(word, description)"

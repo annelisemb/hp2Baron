@@ -1,0 +1,5 @@
+"0","dog_sentiment2 %>%"
+"0","  group_by(name, sentiment) %>%"
+"0","  summarise(n = n()) %>%"
+"0","  arrange(desc(n))"
+"2","`summarise()` has grouped output by 'name'. You can override using the `.groups` argument."

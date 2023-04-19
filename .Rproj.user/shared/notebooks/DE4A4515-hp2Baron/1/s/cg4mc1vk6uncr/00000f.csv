@@ -1,0 +1,1 @@
+"0","dogs$name <- apply(dogs[""name""], 2, tolower)"

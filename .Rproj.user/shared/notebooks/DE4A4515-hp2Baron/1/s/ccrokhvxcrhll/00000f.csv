@@ -1,0 +1,4 @@
+"0","dog_descrip_idf %>%"
+"0","  select(word, tf_idf) %>% "
+"0","  arrange(desc(tf_idf))"
+"2","Adding missing grouping variables: `id`"

@@ -1,0 +1,6 @@
+"0","dog_sentiment %>%"
+"0","  group_by(sentiment) %>%"
+"0","  slice_max(n, n = 20) %>%"
+"0","  ggplot(aes(n, word, fill = sentiment)) +"
+"0","  geom_col(show.legend = FALSE) +"
+"0","  facet_wrap(~ sentiment, scales = ""free"")"

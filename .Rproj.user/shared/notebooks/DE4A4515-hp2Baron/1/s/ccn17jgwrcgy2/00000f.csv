@@ -1,0 +1,11 @@
+"0","dogs <- dogs %>%"
+"0","  rename("
+"0","    name = 'name[,""name""]'"
+"0","  )"
+"1","[1m[33mError[39m in `rename()`:[22m
+[33m![39m Can't rename columns that don't exist.
+[31m✖[39m Column `name[,""name""]` doesn't exist.
+Backtrace:
+[90m 1. [39mdogs %>% rename(name = ""name[,\""name\""]"")
+[90m 3. [39m[1m[94mdplyr:::rename.data.frame([39m[22m., name = ""name[,\""name\""]""[1m[94m)[39m[22m
+"

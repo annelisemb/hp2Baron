@@ -1,0 +1,5 @@
+"0","dog_descrip_freq %>%"
+"0","  slice_max(n, n = 20) %>%"
+"0","  mutate(word = reorder(word, n)) %>%"
+"0","  ggplot(aes(n, word)) +"
+"0","  geom_col()"

@@ -1,0 +1,5 @@
+"0","dog_sentiment2 %>%"
+"0","  filter(age == ""Baby"") %>%"
+"0","  group_by(sentiment) %>%"
+"0","  summarise(n = n()) %>%"
+"0","  arrange(desc(n))"

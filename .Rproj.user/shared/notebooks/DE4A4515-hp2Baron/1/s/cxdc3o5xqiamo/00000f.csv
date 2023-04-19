@@ -1,0 +1,4 @@
+"0","dog_descrip_freq <- dog_descrip %>%"
+"0","  count(word, sort = TRUE)"
+"0",""
+"0","dog_descrip_freq"
